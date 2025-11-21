@@ -1,0 +1,53 @@
+name: Deploy Flask App to EKS
+
+on:
+  push:
+    branches:
+      - main   # Déclenche le workflow à chaque push sur la branche main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: eu-west-3
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+    steps:
+      # Checkout du code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Configure AWS CLI
+      - name: Configure AWS
+        run: |
+          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+          aws configure set region $AWS_REGION
+
+      #  Login à ECR
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 022694873939.dkr.ecr.$AWS_REGION.amazonaws.com
+
+      # Build et tag de l'image Docker
+      - name: Build Docker image
+        run: |
+          docker build -t aws-app ./app
+          docker tag aws-app:latest 022694873939.dkr.ecr.$AWS_REGION.amazonaws.com/aws-app:latest
+
+      # Push de l'image dans ECR
+      - name: Push Docker image to ECR
+        run: |
+          docker push 022694873939.dkr.ecr.$AWS_REGION.amazonaws.com/aws-app:latest
+
+      # Configure kubectl pour EKS
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name cluster-ci-cd --region $AWS_REGION
+
+      #  Déploiement de l'application sur EKS
+      - name: Deploy to EKS
+        run: |
+          kubectl apply -f deployment.yaml --validate=false
