@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: app-aws
-        image: 022694873939.dkr.ecr.eu-west-3.amazonaws.com/flask-web-app:latest
+        image: 022694873939.dkr.ecr.eu-west-3.amazonaws.com/aws-app:latest
 
         ports:
         - containerPort: 5000
