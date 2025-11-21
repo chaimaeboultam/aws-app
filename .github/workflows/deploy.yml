@@ -3,7 +3,7 @@ name: Deploy Flask App to EKS
 on:
   push:
     branches:
-      - main   # Déclenche le workflow à chaque push sur la branche main
+      - master   # Déclenche le workflow à chaque push sur la branche main
 
 jobs:
   deploy:
